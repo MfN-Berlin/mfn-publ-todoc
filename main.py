@@ -1,5 +1,7 @@
 import csv
 from docx import Document
+from collections import defaultdict
+
 
 cols = {
       0: "quelle",
@@ -43,14 +45,17 @@ cols_rev = dict((v,k) for k,v in cols.items())
 
 pubtypes =  set()
 
-with open('../Master_cleaned_2024_sp_2025_02_20_UTF-8.CSV', newline='\n') as csvfile:
+publis = defaultdict(list)
+
+with open('Master_cleaned_2024_cs_2025_02_24.CSV', newline='\n') as csvfile:
     spamreader = csv.reader(csvfile, delimiter=';', quotechar='"')
     for row in spamreader:
         for idx, field in enumerate(row):
             if idx == cols_rev.get('type'):
-                pubtypes.add(field)
+                publis[field].append(row)
 
-print(pubtypes)
+print(publis['wissartikel'])
+
 
 # http://python-docx.readthedocs.io/en/latest/
 
