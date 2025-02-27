@@ -48,7 +48,7 @@ NAN = 'NaN'
 
 
 def split_authors(authors):
-    splits = re.split('\.,|\. &', authors[:-1])
+    splits = re.split('\.,|\. &', authors.strip()[:-1])
     result = list()
     for spl in splits:
         stripped = spl.strip()
@@ -85,7 +85,7 @@ def add_doi(paragraph, doi):
             paragraph.add_run(f' DOI: https://doi.org/{doi}.')
 
 
-def readCsv():
+def read_csv():
     publis = defaultdict(list)
     with open('../Master_cleaned_2024_cs_2025_02_24.CSV', newline='\n') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=';', quotechar='"')
@@ -113,7 +113,7 @@ def format_article(document, articles):
         p.add_run(s.journal).italic = True
         p.add_run(f', {s.biblio_volume}')
         if s.biblio_issue != NAN:
-            p.add_run(f' ({s.biblio_issue})')
+            p.add_run(f', ({s.biblio_issue})')
         add_biblio(paragraph=p, first_page=s.biblio_first_page, last_page=s.biblio_last_page)
         add_doi(paragraph=p, doi=s.doi)
 
@@ -188,6 +188,9 @@ def format_datapubl(document, articles):
         p.add_run(f'. Version ({s.biblio_issue}). {s.publisher}. ')
         add_doi(paragraph=p, doi=s.doi)
 
+def sort_articles(articles):
+    return sorted(articles, key=lambda r: r.authorships_raw_author_name.strip())
+
 
 def createDoc(publis):
     document = Document()
@@ -200,7 +203,7 @@ def createDoc(publis):
     document.add_heading('Scientific articles in peer-reviewed journals')
 
     peerrevarticle = publis.get('peerrevartikel', [])
-    sorted_peerrevarticle = sorted(peerrevarticle, key=lambda r: r.authorships_raw_author_name)
+    sorted_peerrevarticle = sort_articles(peerrevarticle)
 
     format_article(document, articles=sorted_peerrevarticle)
 
@@ -211,7 +214,7 @@ def createDoc(publis):
     wissartikel = publis.get('wissartikel', [])
     wissartikel.extend(publis.get('editorial', []))
     wissartikel.extend(publis.get('review', []))
-    sorted_wissartikel = sorted(wissartikel, key=lambda r: r.authorships_raw_author_name)
+    sorted_wissartikel = sort_articles(wissartikel)
 
     format_article(document, articles=sorted_wissartikel)
 
@@ -220,7 +223,7 @@ def createDoc(publis):
     document.add_heading('Popular scientific monographs')
 
     buchpopular = publis.get('buchpopular', [])
-    sorted_buchpopular = sorted(buchpopular, key=lambda r: r.authorships_raw_author_name)
+    sorted_buchpopular = sort_articles(buchpopular)
     format_monographie(document, sorted_buchpopular)
 
     # sammelband
@@ -228,7 +231,7 @@ def createDoc(publis):
     document.add_heading('Edited books – Editorship of edited volumes')
 
     sammelband = publis.get('sammelband', [])
-    sorted_sammelband = sorted(sammelband, key=lambda r: r.authorships_raw_author_name)
+    sorted_sammelband = sort_articles(sammelband)
     format_monographie(document, sorted_sammelband)
 
     # sammelbandbeitrag
@@ -236,7 +239,7 @@ def createDoc(publis):
     document.add_heading('Individual contributions to edited volumes')
 
     sammelbandbeitrag = publis.get('sammelbandbeitrag', [])
-    sorted_sammelbandbeitrag = sorted(sammelband, key=lambda r: r.authorships_raw_author_name)
+    sorted_sammelbandbeitrag = sort_articles(sammelband)
     format_sammelbandbeitrag(document, sorted_sammelbandbeitrag)
 
     # stellungnahmen
@@ -244,7 +247,7 @@ def createDoc(publis):
     document.add_heading('Position papers')
 
     stellungnahmen = publis.get('stellungnahmen', [])
-    sorted_stellungnahmen = sorted(stellungnahmen, key=lambda r: r.authorships_raw_author_name)
+    sorted_stellungnahmen = sort_articles(stellungnahmen)
     format_report(document, sorted_stellungnahmen)
 
     # beitraginpresse populartikel
@@ -253,7 +256,7 @@ def createDoc(publis):
 
     beitraginpresse = publis.get('beitraginpresse', [])
     beitraginpresse.extend(publis.get('populartikel', []))
-    sorted_beitraginpresse = sorted(beitraginpresse, key=lambda r: r.authorships_raw_author_name)
+    sorted_beitraginpresse = sort_articles(beitraginpresse)
     format_article(document, sorted_beitraginpresse)
 
     # konferenzbeitragpaper poster
@@ -262,7 +265,7 @@ def createDoc(publis):
 
     konferenzbeitragpaper = publis.get('konferenzbeitragpaper', [])
     konferenzbeitragpaper.extend(publis.get('poster', []))
-    sorted_konferenzbeitragpaper = sorted(konferenzbeitragpaper, key=lambda r: r.authorships_raw_author_name)
+    sorted_konferenzbeitragpaper = sort_articles(konferenzbeitragpaper)
     format_konf(document, sorted_konferenzbeitragpaper)
 
     # arbeitspapier bericht project report
@@ -273,20 +276,20 @@ def createDoc(publis):
     arbeitspapier.extend(publis.get('bericht', []))
     arbeitspapier.extend(publis.get('project', []))
     arbeitspapier.extend(publis.get('report', []))
-    sorted_arbeitspapier = sorted(arbeitspapier, key=lambda r: r.authorships_raw_author_name)
+    sorted_arbeitspapier = sort_articles(arbeitspapier)
     format_report(document, sorted_arbeitspapier)
 
     # datenpublikation
     document.add_heading('Datenpublikationen')
     document.add_heading('Data publications')
     datenpublikation = publis.get('datenpublikation', [])
-    sorted_datenpublikation = sorted(datenpublikation, key=lambda r: r.authorships_raw_author_name)
+    sorted_datenpublikation = sort_articles(datenpublikation)
 
     format_datapubl(document=document, articles=sorted_datenpublikation)
 
     return document
 
 
-publis = readCsv()
+publis = read_csv()
 doc = createDoc(publis)
 doc.save('demo2.docx')
