@@ -1,5 +1,6 @@
 import csv
 import re
+import json
 from collections import defaultdict
 
 from docx import Document
@@ -73,16 +74,16 @@ def add_authors(paragraph, authors, mfn_authors):
 
 def add_biblio(paragraph, first_page, last_page):
     if first_page and first_page != NAN and last_page and last_page != NAN:
-        paragraph.add_run(f', {first_page}-{last_page}.')
+        paragraph.add_run(f', {first_page}-{last_page}')
     elif first_page and first_page != NAN:
-        paragraph.add_run(f', {first_page}.')
+        paragraph.add_run(f', {first_page}')
 
 def add_doi(paragraph, doi):
     if doi != NAN:  # print or online
         if doi.startswith('http'):
-            paragraph.add_run(f' {doi}.')
+            paragraph.add_run(f'. {doi}.')
         else:
-            paragraph.add_run(f' DOI: https://doi.org/{doi}.')
+            paragraph.add_run(f'. DOI: https://doi.org/{doi}.')
 
 
 def read_csv():
@@ -105,14 +106,16 @@ def read_csv():
 # [authorships.raw_author_name]. ([publication_year]). [title]. [journal], [biblio.volume] ([biblio.issue]), pp. [biblio.first_page]-[ biblio.last_page].
 def format_article(document, articles):
     for s in articles:
+        print(json.dumps(s.__dict__))
         p = document.add_paragraph()
         if s.open_access_is_oa:
             p.add_run("æ")
         add_authors(p, s.authorships_raw_author_name, s.mfn_authors)
         p.add_run(f' ({s.publication_year}). {s.title}. ')
         p.add_run(s.journal).italic = True
-        p.add_run(f', {s.biblio_volume}')
-        if s.biblio_issue != NAN:
+        if s.biblio_volume and s.biblio_volume != NAN:
+            p.add_run(f', {s.biblio_volume}')
+        if s.biblio_issue and s.biblio_issue != NAN:
             p.add_run(f', ({s.biblio_issue})')
         add_biblio(paragraph=p, first_page=s.biblio_first_page, last_page=s.biblio_last_page)
         add_doi(paragraph=p, doi=s.doi)
@@ -130,7 +133,7 @@ def format_monographie(document, articles):
         p.add_run(f' {s.book_serie}.')
         if s.biblio_volume and s.biblio_volume != NAN:
             p.add_run(f' {s.biblio_volume},')
-        p.add_run(f' {s.print}:{s.publisher}.')
+        p.add_run(f' {s.print}:{s.publisher}')
         add_doi(paragraph=p, doi=s.doi)
 
 # Sammelbandbeitrag [type: sammelbandbeitrag]
@@ -143,13 +146,13 @@ def format_sammelbandbeitrag(document, articles):
         add_authors(p, s.authorships_raw_author_name, s.mfn_authors)
         p.add_run(f' ({s.publication_year}). {s.title}. ')
         if s.editor and s.editor != NAN:
-            p.add_run(f'In: {s.editor} (Ed.)., ')
-        p.add_run(f'{s.book_title}')
+            p.add_run(f'In: {s.editor} (Ed.), ')
+        p.add_run(f'{s.book_title}').italic = True
         add_biblio(paragraph=p, first_page=s.biblio_first_page, last_page=s.biblio_last_page)
         p.add_run(f' {s.book_serie}.')
         if s.biblio_volume and s.biblio_volume != NAN:
             p.add_run(f' {s.biblio_volume},')
-        p.add_run(f' {s.print}:{s.publisher}.')
+        p.add_run(f' {s.print}:{s.publisher}')
         add_doi(paragraph=p, doi=s.doi)
 
 
@@ -161,11 +164,12 @@ def format_report(document, articles):
         if s.open_access_is_oa:
             p.add_run("æ")
         add_authors(p, s.authorships_raw_author_name, s.mfn_authors)
-        p.add_run(f' ({s.publication_year}). {s.title}. ')
+        p.add_run(f' ({s.publication_year}).')
+        p.add_run(f' {s.title}. ').italic = True
         add_biblio(paragraph=p, first_page=s.biblio_first_page, last_page=s.biblio_last_page)
-        p.add_run(f' {s.publisher}.')
+        p.add_run(f' {s.publisher}')
         if s.print and s.publisher and s.print != NAN and s.publisher != NAN:
-            p.add_run(f' {s.print}:{s.publisher}.')
+            p.add_run(f'. {s.print}:{s.publisher}')
         add_doi(p, s.doi)
 
 
@@ -185,7 +189,9 @@ def format_datapubl(document, articles):
         add_authors(p, s.authorships_raw_author_name, s.mfn_authors)
         p.add_run(f' ({s.publication_year}). {s.title}. ')
         p.add_run('__DATASET__')
-        p.add_run(f'. Version ({s.biblio_issue}). {s.publisher}. ')
+        if s.biblio_issue and s.biblio_issue != NAN:
+            p.add_run(f'. Version ({s.biblio_issue})')
+        p.add_run(f'. s.publisher')
         add_doi(paragraph=p, doi=s.doi)
 
 def sort_articles(articles):
