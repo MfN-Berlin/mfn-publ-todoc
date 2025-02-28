@@ -1,6 +1,5 @@
 import csv
 import re
-import json
 from collections import defaultdict
 
 from docx import Document
@@ -106,7 +105,6 @@ def read_csv():
 # [authorships.raw_author_name]. ([publication_year]). [title]. [journal], [biblio.volume] ([biblio.issue]), pp. [biblio.first_page]-[ biblio.last_page].
 def format_article(document, articles):
     for s in articles:
-        print(json.dumps(s.__dict__))
         p = document.add_paragraph()
         if s.open_access_is_oa:
             p.add_run("æ")
@@ -167,7 +165,8 @@ def format_report(document, articles):
         p.add_run(f' ({s.publication_year}).')
         p.add_run(f' {s.title}. ').italic = True
         add_biblio(paragraph=p, first_page=s.biblio_first_page, last_page=s.biblio_last_page)
-        p.add_run(f' {s.publisher}')
+        if s.publisher and s.publisher != NAN:
+            p.add_run(f' {s.publisher}')
         if s.print and s.publisher and s.print != NAN and s.publisher != NAN:
             p.add_run(f'. {s.print}:{s.publisher}')
         add_doi(p, s.doi)
@@ -188,7 +187,7 @@ def format_datapubl(document, articles):
             p.add_run("æ")
         add_authors(p, s.authorships_raw_author_name, s.mfn_authors)
         p.add_run(f' ({s.publication_year}). {s.title}. ')
-        p.add_run('__DATASET__')
+        p.add_run('[Dataset]')
         if s.biblio_issue and s.biblio_issue != NAN:
             p.add_run(f'. Version ({s.biblio_issue})')
         p.add_run(f'. s.publisher')
@@ -298,4 +297,4 @@ def createDoc(publis):
 
 publis = read_csv()
 doc = createDoc(publis)
-doc.save('demo2.docx')
+doc.save('mfn_publikationen_2024.docx')
