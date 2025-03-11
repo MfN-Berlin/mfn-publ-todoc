@@ -244,7 +244,7 @@ def createDoc(publis):
     document.add_heading('Individual contributions to edited volumes')
 
     sammelbandbeitrag = publis.get('sammelbandbeitrag', [])
-    sorted_sammelbandbeitrag = sort_articles(sammelband)
+    sorted_sammelbandbeitrag = sort_articles(sammelbandbeitrag)
     format_sammelbandbeitrag(document, sorted_sammelbandbeitrag)
 
     # stellungnahmen
